@@ -3,13 +3,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-typedef int Elem_t;
-#define TREE_FMT "%d"
+typedef const char* Elem_t;
+#define TREE_FMT "%s"
 
 #define LEFT false
 #define RIGHT true
@@ -120,12 +121,6 @@ void FPrint(const Node_t* node, const char* filename)
     fclose(fp);
 }
 
-int ReadTree(const char* filename, Node_t root)
-{
-    FILE* fp = fopen(filename, "r");
-    assert(fp);
-    
-}
 
 int ReadFile(const char* filename, Buffer* preorder)
 {
@@ -177,12 +172,13 @@ Node_t* ParseSubtree(const char** p, Node_t* parent, bool* ok)
     *p = Skip(*p);
     if (**p == ')') { (*p)++; *ok = true; return NULL; }
 
-    Elem_t val = 0;
+    //Elem_t val = 0;
+    char buf[256] = {};
     int n = 0;
-    if (sscanf(*p, TREE_FMT "%n", &val, &n) != 1) return NULL;
+    if (sscanf(*p, TREE_FMT "%n", buf, &n) != 1) return NULL;
     *p += n;
 
-    Node_t* node = MakeNode((Elem_t)val);
+    Node_t* node = MakeNode(strdup(buf));
     node->parent = parent;
 
     bool lok = false;
