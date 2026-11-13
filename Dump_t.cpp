@@ -8,8 +8,7 @@ void dump_node(const Node_t* node, FILE* out)
 {
     if (!node) return;
 
-    fprintf(out,
-        "    n%p [shape=Mrecord, label=\"{ " TREE_FMT " | %p | L=%p R=%p }\"];\n",
+    fprintf(out, "    n%p [shape=Mrecord, label=\"{ " TREE_FMT " | %p | L=%p R=%p }\"];\n",
         (const void*)node, node->data,
         (const void*)node,
         (const void*)node->left,
