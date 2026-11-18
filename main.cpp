@@ -1,86 +1,61 @@
 #include <stdio.h>
-#include "tree.cpp"
-#include "Dump_t.cpp"
+#include "Akinator.cpp"
 
-int main()
+#define MAXLEN 128
+
+void RunAkinator(int mode, char* filename, char* png);
+
+int main(int argc, char* argv[])
 {
-    /*Node_t* v1 = NewNode(NULL, "препод", RIGHT);
-    Node_t* v2 = NewNode(v1, "Овчос", RIGHT);
-    Node_t* v3 = NewNode(v1, "ментор", LEFT);
-    Node_t* v4 = NewNode(v3, "Костян", RIGHT);
-    Node_t* v5 = NewNode(v3, "Виталя_Симонов", LEFT);
-
-
-    FPrint(v1, "MIPT_Akinator.txt");*/
-
-    Node_t* v = ReadTree("MIPT_Akinator.txt");
-
-    //Print(v);
-    Node_t* root = v;
-    bool dir = LEFT;
-
-    while (v && (v->right || v->left))
+    if (argc < 3)
     {
-        printf("Ваш персонаж %s?\n", v->data);
-        int c = getchar();
-        if (c == '+')
-        {
-            v = v->right;
-            dir = RIGHT;
-        }
-        else
-        {
-            v = v->left;
-            dir = LEFT;
-        }
-        while (c != '\n') c = getchar();
-
-    }
-    
-    if (v) printf("Кажется, я знаю кто это: %s?\n", v->data);
-    
-
-    int c = getchar();
-    if (c != '+')
-    {
-        printf("Кто это был?\n");
-        char name[128] = {};
-        scanf("%127s", name);
-
-        printf("Чем %s отличается от %s: он ", name, v->data);
-        char quest[128] = {};
-        getchar();
-        fgets(quest, sizeof(quest), stdin);
-
-        char cur[128] = {};
-        strcpy(cur, v->data);
-
-        DeleteLeaf(v);
-
-        bool Question = true;
-        char* q_text = quest;
-        if(strncmp(quest, "не ", strlen("не ")) == 0)
-        {
-            Question = false;
-            q_text = quest + strlen("не ");
-        }
-
-        //printf("%s\n%s\n", name, q_text);
-
-        Node_t* parent = v->parent;
-        Node_t* q = NewNode(parent, q_text, dir);
-        
-        NewNode(q, cur,  Question ? LEFT : RIGHT);
-        NewNode(q, name, Question ? RIGHT : LEFT);
-
-        //if (!Question) printf("yaitsa\n");
+        printf("too few args\n");
+        return 1;
     }
 
-    FPrint(root, "MIPT_Akinator.txt");
-    TreeDumpPng(root, "tree.png");
+    printf("Какой режим хотите запустить?\n1 - режим отгадывания\n2 - режим биографии\n3 - режим сравнения\n");
+
+    int mode = 1;
     
-    TreeFree(root);
-    
+    if (scanf("%d", &mode) != 1 || mode > 3 || mode < 1) return printf("incorrect input\n");
+    getchar();
+
+    RunAkinator(mode, argv[1], argv[2]);
 
     return 0;
+}
+
+void RunAkinator(int mode, char* filename, char* png)
+{
+    switch (mode)
+    {
+        case 1: Akinator(filename, png); break;
+
+        case 2:
+        {
+            printf("Какого персонажа разложить по Тейлору?\n");
+            char name[MAXLEN] = {};
+            scanf("%s", name);
+            Path(filename, name);
+            break;
+        }
+        case 3:
+        {
+            printf("Каких персонажей хотите сравнить? Введите через пробел\n");
+
+            char name1[MAXLEN] = {};
+            char name2[MAXLEN] = {};
+
+            scanf("%s", name1);
+            scanf("%s", name2);
+
+            Compare(filename, name1, name2);
+
+            break;
+        }
+
+        default: break;
+
+    }
+
 }

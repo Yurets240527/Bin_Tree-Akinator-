@@ -15,6 +15,10 @@ typedef const char* Elem_t;
 #define LEFT false
 #define RIGHT true
 
+#define MAXLEN 128
+
+//TODO: STRUCT TREE
+
 
 struct Node_t
 {
@@ -24,6 +28,13 @@ struct Node_t
     Node_t* right;
     
     Node_t* parent;
+};
+
+struct Tree
+{
+    Node_t* root;
+
+    size_t num_of_nodes;
 };
 
 struct Buffer
@@ -40,6 +51,8 @@ void Print(const Node_t* node);
 
 void FPrint(const Node_t* node, const char* filename);
 
+void TreeFree(Node_t* node);
+
 
 Node_t* NewNode(Node_t* parent, Elem_t value, bool direction)
 {
@@ -47,7 +60,7 @@ Node_t* NewNode(Node_t* parent, Elem_t value, bool direction)
     if (!node)
     {
         fprintf(stderr, "Calloc\n");
-        abort();
+        exit(1);
     }
 
     node->data   = value;
@@ -67,6 +80,22 @@ Node_t* NewNode(Node_t* parent, Elem_t value, bool direction)
     return node;
 }
 
+Tree* TreeCtor()
+{
+    Tree* t = (Tree*)calloc(1, sizeof(Tree));
+    if (!t) { fprintf(stderr, "calloc\n"); exit(1); }
+    t->root = NULL;
+    t->num_of_nodes = 0;
+    return t;
+}
+
+void TreeDtor(Tree* t)
+{
+    if (!t) return;
+    TreeFree(t->root);
+    free(t);
+}
+
 void DeleteLeaf(Node_t* node)
 {
     if (!node) return;
@@ -84,6 +113,7 @@ void TreeFree(Node_t* node)
     if (!node) return;
     TreeFree(node->left);
     TreeFree(node->right);
+    free((void*)node->data);
     free(node);
 }
 
@@ -101,7 +131,7 @@ void Print(const Node_t* node)
 
 }
 
-void fprint_rec(const Node_t* node, FILE* fp)
+static void fprint_rec(const Node_t* node, FILE* fp)
 {
     if (!node) { fprintf(fp, "()"); return; }
 
@@ -153,15 +183,8 @@ const char* Skip(const char* p)
     return p;
 }
 
-static Node_t* MakeNode(Elem_t val)
-{
-    Node_t* n = (Node_t*) calloc(1, sizeof(Node_t));
-    if (!n) { fprintf(stderr, "calloc\n"); abort(); }
-    n->data = val;
-    return n;
-}
 
-Node_t* ParseSubtree(const char** p, Node_t* parent, bool* ok)
+Node_t* ParseSubtree(const char** p, Node_t* parent, bool dir, bool* ok)
 {
     *ok = false;
     *p = Skip(*p);
@@ -173,20 +196,20 @@ Node_t* ParseSubtree(const char** p, Node_t* parent, bool* ok)
     if (**p == ')') { (*p)++; *ok = true; return NULL; }
 
     //Elem_t val = 0;
-    char buf[256] = {};
+    char buf[MAXLEN] = {};
     int n = 0;
     if (sscanf(*p, TREE_FMT "%n", buf, &n) != 1) return NULL;
     *p += n;
 
-    Node_t* node = MakeNode(strdup(buf));
+    Node_t* node = NewNode(parent, strdup(buf), dir);
     node->parent = parent;
 
     bool lok = false;
     bool rok = false;
-    node->left  = ParseSubtree(p, node, &lok);
+    node->left  = ParseSubtree(p, node, LEFT, &lok);
     if (!lok) { TreeFree(node); return NULL; }
 
-    node->right = ParseSubtree(p, node, &rok);
+    node->right = ParseSubtree(p, node, RIGHT, &rok);
     if (!rok) { TreeFree(node); return NULL; }
 
     *p = Skip(*p);
@@ -204,13 +227,15 @@ Node_t* ReadTree(const char* filename)
 
     const char* p = preorder.buf;
     bool ok = false;
-    Node_t* root = ParseSubtree(&p, NULL, &ok);
+
+    Tree* tree = TreeCtor();
+    tree->root = ParseSubtree(&p, NULL, LEFT, &ok);
 
     free(preorder.buf);
 
-    if (!ok) { TreeFree(root); return NULL; }
+    if (!ok) { TreeDtor(tree); return NULL; }
     
-    return root;
+    return tree->root;
 }
 
 
